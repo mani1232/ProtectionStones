@@ -24,9 +24,9 @@ import org.bukkit.entity.Player;
 public class ParticlesUtil {
     public static void persistRedstoneParticle(Player p, Location l, Particle.DustOptions d, int occ) {
         for (int i = 0; i < occ; i++) {
-            Bukkit.getScheduler().runTaskLater(ProtectionStones.getInstance(), () -> {
+            ProtectionStones.getInstance().getModernScheduler().runAtLocationLater(l, () -> {
                 if (p.isOnline()) p.spawnParticle(Particle.REDSTONE, l, 1, d);
-            }, i*20);
+            }, i*20L);
         }
     }
 }

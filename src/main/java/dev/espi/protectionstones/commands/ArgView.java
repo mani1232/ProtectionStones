@@ -78,45 +78,47 @@ public class ArgView implements PSCommandArg {
 
         // add player to cooldown
         cooldown.add(p.getUniqueId());
-        Bukkit.getScheduler().runTaskLaterAsynchronously(ProtectionStones.getInstance(), () -> cooldown.remove(p.getUniqueId()), 20 * ProtectionStones.getInstance().getConfigOptions().psViewCooldown);
+        ProtectionStones.getInstance().getModernScheduler().runLaterAsync(() -> cooldown.remove(p.getUniqueId()), 20L * ProtectionStones.getInstance().getConfigOptions().psViewCooldown);
 
         int playerY = p.getLocation().getBlockY(), minY = r.getWGRegion().getMinimumPoint().getBlockY(), maxY = r.getWGRegion().getMaximumPoint().getBlockY();
 
         // send particles to client
 
-        Bukkit.getScheduler().runTaskAsynchronously(ProtectionStones.getInstance(), () -> {
+        ProtectionStones.getInstance().getModernScheduler().runAsync(() -> {
 
             AtomicInteger modU = new AtomicInteger(0);
 
-            if (r instanceof PSGroupRegion) {
-                PSGroupRegion pr = (PSGroupRegion) r;
-                for (PSMergedRegion psmr : pr.getMergedRegions()) {
-                    handlePurpleParticle(p, new Location(p.getWorld(), 0.5 + psmr.getProtectBlock().getX(), 1.5 + psmr.getProtectBlock().getY(), 0.5 + psmr.getProtectBlock().getZ()));
-                    for (int y = minY; y <= maxY; y += 10) {
-                        handlePurpleParticle(p, new Location(p.getWorld(), 0.5 + psmr.getProtectBlock().getX(), 0.5 + y, 0.5 + psmr.getProtectBlock().getZ()));
-                    }
-                }
-            } else {
-                handlePurpleParticle(p, new Location(p.getWorld(), 0.5 + r.getProtectBlock().getX(), 1.5 + r.getProtectBlock().getY(), 0.5 + r.getProtectBlock().getZ()));
-                for (int y = minY; y <= maxY; y += 10) {
-                    handlePurpleParticle(p, new Location(p.getWorld(), 0.5 + r.getProtectBlock().getX(), 0.5 + y, 0.5 + r.getProtectBlock().getZ()));
-                }
-            }
-
-            RegionTraverse.traverseRegionEdge(new HashSet<>(r.getWGRegion().getPoints()), Collections.singletonList(r.getWGRegion()), tr -> {
-                if (tr.isVertex) {
-                    handleBlueParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+playerY, 0.5+tr.point.getZ()));
-                    for (int y = minY; y <= maxY; y += 5) {
-                        handleBlueParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+y, 0.5+tr.point.getZ()));
+            ProtectionStones.getInstance().getModernScheduler().runAtLocation(p.getLocation(), () -> {
+                if (r instanceof PSGroupRegion) {
+                    PSGroupRegion pr = (PSGroupRegion) r;
+                    for (PSMergedRegion psmr : pr.getMergedRegions()) {
+                        handlePurpleParticle(p, new Location(p.getWorld(), 0.5 + psmr.getProtectBlock().getX(), 1.5 + psmr.getProtectBlock().getY(), 0.5 + psmr.getProtectBlock().getZ()));
+                        for (int y = minY; y <= maxY; y += 10) {
+                            handlePurpleParticle(p, new Location(p.getWorld(), 0.5 + psmr.getProtectBlock().getX(), 0.5 + y, 0.5 + psmr.getProtectBlock().getZ()));
+                        }
                     }
                 } else {
-                    if (modU.get() % 2 == 0) {
-                        handlePinkParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+playerY, 0.5+tr.point.getZ()));
-                        handlePinkParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+minY, 0.5+tr.point.getZ()));
-                        handlePinkParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+maxY, 0.5+tr.point.getZ()));
+                    handlePurpleParticle(p, new Location(p.getWorld(), 0.5 + r.getProtectBlock().getX(), 1.5 + r.getProtectBlock().getY(), 0.5 + r.getProtectBlock().getZ()));
+                    for (int y = minY; y <= maxY; y += 10) {
+                        handlePurpleParticle(p, new Location(p.getWorld(), 0.5 + r.getProtectBlock().getX(), 0.5 + y, 0.5 + r.getProtectBlock().getZ()));
                     }
-                    modU.set((modU.get() + 1) % 2);
                 }
+
+                RegionTraverse.traverseRegionEdge(new HashSet<>(r.getWGRegion().getPoints()), Collections.singletonList(r.getWGRegion()), tr -> {
+                    if (tr.isVertex) {
+                        handleBlueParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+playerY, 0.5+tr.point.getZ()));
+                        for (int y = minY; y <= maxY; y += 5) {
+                            handleBlueParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+y, 0.5+tr.point.getZ()));
+                        }
+                    } else {
+                        if (modU.get() % 2 == 0) {
+                            handlePinkParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+playerY, 0.5+tr.point.getZ()));
+                            handlePinkParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+minY, 0.5+tr.point.getZ()));
+                            handlePinkParticle(p, new Location(p.getWorld(), 0.5+tr.point.getX(), 0.5+maxY, 0.5+tr.point.getZ()));
+                        }
+                        modU.set((modU.get() + 1) % 2);
+                    }
+                });
             });
         });
         return true;

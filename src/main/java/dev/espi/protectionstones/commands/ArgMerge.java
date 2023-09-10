@@ -129,7 +129,7 @@ public class ArgMerge implements PSCommandArg {
             if (!WGUtils.canMergeRegionTypes(aRegion.getTypeOptions(), aRoot))
                 return PSL.msg(p, PSL.MERGE_NOT_ALLOWED.msg());
 
-            Bukkit.getScheduler().runTaskAsynchronously(ProtectionStones.getInstance(), () -> {
+            ProtectionStones.getInstance().getModernScheduler().runAtLocation(aRoot.getProtectBlock().getLocation(), () -> {
                 try {
                     WGMerge.mergeRealRegions(p.getWorld(), rm, aRoot, Arrays.asList(aRegion, aRoot));
                 } catch (WGMerge.RegionHoleException e) {
@@ -142,7 +142,7 @@ public class ArgMerge implements PSCommandArg {
                 PSL.msg(p, PSL.MERGE_MERGED.msg());
 
                 // show menu again if the new region still has overlapping regions
-                Bukkit.getScheduler().runTask(ProtectionStones.getInstance(), () -> {
+                ProtectionStones.getInstance().getModernScheduler().runAtLocation(p.getLocation(), () -> {
                     if (!getGUI(p, PSRegion.fromWGRegion(p.getWorld(), rm.getRegion(aRoot.getId()))).isEmpty()) {
                         Bukkit.dispatchCommand(p, ProtectionStones.getInstance().getConfigOptions().base_command + " merge");
                     }

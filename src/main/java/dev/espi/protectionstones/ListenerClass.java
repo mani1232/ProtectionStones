@@ -73,7 +73,7 @@ public class ListenerClass implements Listener {
         UUIDCache.storeUUIDNamePair(p.getUniqueId(), p.getName());
 
         // allow worldguard to resolve all UUIDs to names
-        Bukkit.getScheduler().runTaskAsynchronously(ProtectionStones.getInstance(), () -> UUIDCache.storeWGProfile(p.getUniqueId(), p.getName()));
+        ProtectionStones.getInstance().getModernScheduler().runAsync(() -> UUIDCache.storeWGProfile(p.getUniqueId(), p.getName()));
 
         // add recipes to player's recipe book
         p.discoverRecipes(RecipeUtil.getRecipeKeys());
@@ -87,7 +87,7 @@ public class ListenerClass implements Listener {
 
         // tax join message
         if (ProtectionStones.getInstance().getConfigOptions().taxEnabled && ProtectionStones.getInstance().getConfigOptions().taxMessageOnJoin) {
-            Bukkit.getScheduler().runTaskAsynchronously(ProtectionStones.getInstance(), () -> {
+            ProtectionStones.getInstance().getModernScheduler().runAsync(() -> {
                 int amount = 0;
                 for (PSRegion psr : psp.getTaxEligibleRegions()) {
                     for (PSRegion.TaxPayment tp : psr.getTaxPaymentsDue()) {
@@ -562,7 +562,7 @@ public class ListenerClass implements Listener {
         if (!event.getRegion().getTypeOptions().eventsEnabled) return;
 
         // run on next tick (after the region is created to allow for edits to the region)
-        Bukkit.getServer().getScheduler().runTask(ProtectionStones.getInstance(), () -> {
+        ProtectionStones.getInstance().getModernScheduler().runAtLocation(event.getRegion().getProtectBlock().getLocation(), () -> {
             // run custom commands (in config)
             for (String action : event.getRegion().getTypeOptions().regionCreateCommands) {
                 execEvent(action, event.getPlayer(), event.getPlayer().getName(), event.getRegion());

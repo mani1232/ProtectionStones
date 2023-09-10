@@ -15,7 +15,10 @@
 
 package dev.espi.protectionstones.commands;
 
-import dev.espi.protectionstones.*;
+import dev.espi.protectionstones.PSL;
+import dev.espi.protectionstones.PSPlayer;
+import dev.espi.protectionstones.PSRegion;
+import dev.espi.protectionstones.ProtectionStones;
 import dev.espi.protectionstones.utils.ChatUtil;
 import dev.espi.protectionstones.utils.UUIDCache;
 import org.bukkit.Bukkit;
@@ -25,7 +28,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 public class ArgTp implements PSCommandArg {
 
@@ -66,19 +72,20 @@ public class ArgTp implements PSCommandArg {
             return PSL.msg(p, PSL.TP_HELP.msg());
 
         if (args.length == 2) { // /ps tp [name/id]
-            Bukkit.getScheduler().runTaskAsynchronously(ProtectionStones.getInstance(), () -> {
+            ProtectionStones.getInstance().getModernScheduler().runAsync(() -> {
                 // get regions from the query
                 List<PSRegion> regions = ProtectionStones.getPSRegions(p.getWorld(), args[1]);
-
-                if (regions.isEmpty()) {
-                    PSL.msg(s, PSL.REGION_DOES_NOT_EXIST.msg());
-                    return;
-                }
-                if (regions.size() > 1) {
-                    ChatUtil.displayDuplicateRegionAliases(p, regions);
-                    return;
-                }
-                teleportPlayer(p, regions.get(0));
+                ProtectionStones.getInstance().getModernScheduler().runAtLocation(regions.get(0).getProtectBlock().getLocation(), () -> {
+                    if (regions.isEmpty()) {
+                        PSL.msg(s, PSL.REGION_DOES_NOT_EXIST.msg());
+                        return;
+                    }
+                    if (regions.size() > 1) {
+                        ChatUtil.displayDuplicateRegionAliases(p, regions);
+                        return;
+                    }
+                    teleportPlayer(p, regions.get(0));
+                });
             });
         } else { // /ps tp [player] [num]
             // get the region id the player wants to teleport to
@@ -100,7 +107,7 @@ public class ArgTp implements PSCommandArg {
             UUID tpUuid = UUIDCache.getUUIDFromName(tpName);
 
             // run region search asynchronously to avoid blocking server thread
-            Bukkit.getScheduler().runTaskAsynchronously(ProtectionStones.getInstance(), () -> {
+            ProtectionStones.getInstance().getModernScheduler().runAsync(() -> {
                 List<PSRegion> regions = PSPlayer.fromUUID(tpUuid).getPSRegionsCrossWorld(p.getWorld(), false);
 
                 // check if region was found
@@ -115,7 +122,9 @@ public class ArgTp implements PSCommandArg {
                     return;
                 }
 
-                teleportPlayer(p, regions.get(regionNumber - 1));
+                ProtectionStones.getInstance().getModernScheduler().runAtLocation(regions.get(regionNumber - 1).getProtectBlock().getLocation(), () -> {
+                    teleportPlayer(p, regions.get(regionNumber - 1));
+                });
             });
         }
 
@@ -138,14 +147,14 @@ public class ArgTp implements PSCommandArg {
         if (r.getTypeOptions().tpWaitingSeconds == 0 || p.hasPermission("protectionstones.tp.bypasswait")) {
             // no teleport delay
             PSL.msg(p, PSL.TPING.msg());
-            Bukkit.getScheduler().runTask(ProtectionStones.getInstance(), () -> p.teleport(r.getHome())); // run on main thread, not async
+            Bukkit.getScheduler().runTask(ProtectionStones.getInstance(), () -> p.teleportAsync(r.getHome())); // run on main thread, not async
         } else if (!r.getTypeOptions().noMovingWhenTeleportWaiting) {
             // teleport delay, but doesn't care about moving
             p.sendMessage(PSL.TP_IN_SECONDS.msg().replace("%seconds%", "" + r.getTypeOptions().tpWaitingSeconds));
 
             Bukkit.getScheduler().runTaskLater(ProtectionStones.getInstance(), () -> {
                 PSL.msg(p, PSL.TPING.msg());
-                p.teleport(r.getHome());
+                p.teleportAsync(r.getHome());
             }, 20 * r.getTypeOptions().tpWaitingSeconds);
 
         } else {// delay and not allowed to move
@@ -183,7 +192,7 @@ public class ArgTp implements PSCommandArg {
                         } else if (waitCounter.get(uuid) == r.getTypeOptions().tpWaitingSeconds * 4) { // * 4 since this loops 4 times a second
                             // if the timer has passed, teleport and cancel
                             PSL.msg(pl, PSL.TPING.msg());
-                            pl.teleport(r.getHome());
+                            pl.teleportAsync(r.getHome());
                             removeUUIDTimer(uuid);
                         }
                     }, 5, 5) // loop 4 times a second

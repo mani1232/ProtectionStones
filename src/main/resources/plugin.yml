@@ -3,6 +3,8 @@ version: ${version}
 description: ${description}
 authors: [EspiDev]
 
+folia-supported: true
+
 depend: [WorldGuard, WorldEdit]
 softdepend: [Vault, PlaceholderAPI, LuckPerms]
 main: dev.espi.protectionstones.ProtectionStones

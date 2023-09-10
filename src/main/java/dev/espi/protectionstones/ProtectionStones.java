@@ -20,6 +20,8 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.impl.ServerImplementation;
 import dev.espi.protectionstones.commands.ArgHelp;
 import dev.espi.protectionstones.commands.PSCommandArg;
 import dev.espi.protectionstones.placeholders.PSPlaceholderExpansion;
@@ -89,6 +91,8 @@ public class ProtectionStones extends JavaPlugin {
     private boolean luckPermsSupportEnabled = false;
     private LuckPerms luckPerms;
 
+    private final FoliaLib foliaLib = new FoliaLib(this);
+
     private boolean placeholderAPISupportEnabled = false;
 
     // ps toggle/on/off list
@@ -146,6 +150,10 @@ public class ProtectionStones extends JavaPlugin {
 
     public LuckPerms getLuckPerms() {
         return luckPerms;
+    }
+
+    public ServerImplementation getModernScheduler() {
+        return foliaLib.getImpl();
     }
 
     /**
@@ -637,7 +645,7 @@ public class ProtectionStones extends JavaPlugin {
         // uuid cache
         getLogger().info("Building UUID cache... (if slow change async-load-uuid-cache in the config to true)");
         if (configOptions.asyncLoadUUIDCache) { // async load
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            getModernScheduler().runAsync(() -> {
                 for (OfflinePlayer op : Bukkit.getOfflinePlayers()) {
                     UUIDCache.storeUUIDNamePair(op.getUniqueId(), op.getName());
                 }

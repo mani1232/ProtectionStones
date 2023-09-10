@@ -80,9 +80,7 @@ public class ArgHome implements PSCommandArg {
                 // cache home regions
                 tabCache.put(p.getUniqueId(), regionNames);
 
-                Bukkit.getScheduler().runTaskLater(ProtectionStones.getInstance(), () -> {
-                    tabCache.remove(p.getUniqueId());
-                }, 200); // remove cache after 10 seconds
+                ProtectionStones.getInstance().getModernScheduler().runLater(() -> tabCache.remove(p.getUniqueId()), 200); // remove cache after 10 seconds
             }
 
             return StringUtil.copyPartialMatches(args[1], tabCache.get(p.getUniqueId()), new ArrayList<>());
@@ -128,7 +126,7 @@ public class ArgHome implements PSCommandArg {
         if (args.length != 2 && args.length != 1)
             return PSL.msg(p, PSL.HOME_HELP.msg());
 
-        Bukkit.getScheduler().runTaskAsynchronously(ProtectionStones.getInstance(), () -> {
+        ProtectionStones.getInstance().getModernScheduler().runAsync(() -> {
             PSPlayer psp = PSPlayer.fromPlayer(p);
             if (args.length == 1) {
                 // just "/ps home"
